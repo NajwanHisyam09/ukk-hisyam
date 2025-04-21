@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        if (Auth::user()->role != 'manageradmin') {
+        if (Auth::user()->role != 'admin') {
             abort(403, 'Tidak Memiliki Akses!');
         }
 
@@ -24,12 +24,12 @@ class UserController extends Controller
             $users = User::paginate(10);
         }
 
-        return view('manageradmin.user.index', compact('users'));
+        return view('manageradmin.index', compact('users'));
     }
 
     public function create()
     {
-        return view('manageradmin.user.create');
+        return view('manageradmin.create');
     }
 
     public function store(Request $request)
@@ -48,7 +48,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        return view('manageradmin.user.edit', compact('user'));
+        return view('manageradmin.edit', compact('user'));
     }
 
     public function update(Request $request, $id)

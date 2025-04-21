@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\Sale;
+
+
 class HomeController extends Controller
 {
     /**
@@ -22,20 +26,40 @@ class HomeController extends Controller
     public function index()
     {
         $userCount = null;
+        $totalPenjualanHariIni = 0;
 
         if (auth()->user()->role == 'manageradmin') {
             $userCount = \App\Models\User::count();
+        } else {
+            $totalPenjualanHariIni = \App\Models\Sale::whereDate('created_at', today())->sum('total');
         }
 
         $productCount = \App\Models\Product::count();
         $salesCount = \App\Models\Sale::count();
         $memberCount = \App\Models\Member::count();
 
-        return view('home', compact('userCount', 'productCount', 'salesCount', 'memberCount'));
-    }
+        $salesData = \App\Models\Sale::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
 
-    public function blank()
-    {
-        return view('layouts.blank-page');
+        $months = $salesData->pluck('month')->map(function ($m) {
+            return \Carbon\Carbon::create()->month($m)->translatedFormat('F');
+        });
+
+        $salesCounts = $salesData->pluck('count');
+
+        $lastSale = Sale::latest()->first();
+
+        return view('home', compact(
+            'userCount',
+            'productCount',
+            'salesCount',
+            'memberCount',
+            'months',
+            'salesCounts',
+            'totalPenjualanHariIni',
+            'lastSale' 
+        ));
     }
 }

@@ -15,7 +15,7 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-    Auth::routes();
+Auth::routes();
 
 Route::middleware(['authenticate'])->group(function () {
     // Home Route
@@ -33,22 +33,28 @@ Route::middleware(['authenticate'])->group(function () {
     Route::resource('members', MemberController::class);
 
 
-    Route::middleware(['manageradmin'])->group(function () {
-        // User Route
-        Route::resource('user', UserController::class);
-
-        Route::get('/sales/export', [SalesExportController::class, 'export'])->name('sales.export');
+    Route::middleware(['authenticate'])->group(function () {
         Route::get('/sales/export/excel', function () {
             return Excel::download(new SalesExport, 'sales.xlsx');
         })->name('sales.export');
 
-        // Product Route
-        Route::put('/products/{id}/update-stock', [ProductController::class, 'updateStock'])->name('products.updateStock');
+        Route::middleware(['admin'])->group(function () {
+            // User management, update stok, dll
+            Route::resource('user', UserController::class);
 
-        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-        Route::get('/profile/change-password', [ProfileController::class, 'changepassword'])->name('profile.change-password');
-        Route::put('/profile/password', [ProfileController::class, 'password'])->name('profile.password');
+            Route::get('/export', [SalesExportController::class, 'export']);
+
+            Route::put('/products/{id}/update-stock', [ProductController::class, 'updateStock'])->name('products.updateStock');
+
+            Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+            Route::get('/profile/change-password', [ProfileController::class, 'changepassword'])->name('profile.change-password');
+            Route::put('/profile/password', [ProfileController::class, 'password'])->name('profile.password');
+        });
+
+        Route::middleware(['user'])->group(function () {
+            Route::post('/confirm-sale', [SaleController::class, 'confirmationStore'])->name('sales.confirmationStore');
+        });
     });
 
     // User Route
@@ -58,4 +64,3 @@ Route::middleware(['authenticate'])->group(function () {
         // Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     });
 });
-

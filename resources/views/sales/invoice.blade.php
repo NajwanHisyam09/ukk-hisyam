@@ -19,13 +19,18 @@
                                     <h5>Informasi Pelanggan</h5>
                                     <p><strong>Nama:</strong> {{ $memberName }}</p>
                                     <p><strong>Status:</strong> {{ $memberId ? 'Member' : 'Non-Member' }}</p>
+                                    @if($memberId)
+                                    <p><strong>Point Diperoleh:</strong> {{ $addPoint }} point</p>
+                                    <p><strong>Total Point Sekarang:</strong> {{ $currentPoints }} point</p>
+                                    @endif
                                 </div>
+
                                 <div class="col-md-6 text-md-end">
                                     <h5>Tanggal Transaksi</h5>
                                     <p>{{ now()->format('d F Y, H:i') }}</p>
                                 </div>
                             </div>
-                            
+
                             <div class="table-responsive mt-4">
                                 <table class="table table-bordered">
                                     <thead class="table-light">
@@ -50,7 +55,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             <div class="row mt-4">
                                 <div class="col-md-6">
                                     <p><strong>Total Pembayaran:</strong> Rp {{ number_format($totalPay, 0, ',', '.') }}</p>
@@ -64,7 +69,7 @@
                                     @endif
                                 </div>
                             </div>
-                            
+
                             <div class="text-center mt-4">
                                 <a href="{{ route('sales.index') }}" class="btn btn-primary">Kembali ke Penjualan</a>
                                 <button class="btn btn-success" onclick="window.print()">Cetak Invoice</button>

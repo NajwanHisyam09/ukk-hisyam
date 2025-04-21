@@ -92,7 +92,7 @@
 
                                 <div class="d-flex justify-content-between">
                                     <a href="{{ route('sales.create') }}" class="btn btn-secondary">Back</a>
-                                    <button type="submit" class="btn btn-primary">Tambah Penjualan</button>
+                                    <button type="submit" class="btn btn-primary">Konfirmasi Penjualan</button>
                                 </div>
                             </form>
                         </div>
@@ -131,8 +131,16 @@
             }
         });
 
-        $('form').on('submit', function() {
-            let totalPay = $('#total_pay').val().replace(/\D/g, '');
+        $('form').on('submit', function(e) {
+            let totalPay = parseInt($('#total_pay').val().replace(/\D/g, ''));
+            let totalAmount = {{ $totalAmount }};
+
+            if (isNaN(totalPay) || totalPay < totalAmount) {
+                alert('Jumlah bayar tidak boleh kurang dari total pembayaran.');
+                e.preventDefault();
+                return false;
+            }
+
             $('#total_pay_numeric').val(totalPay);
         });
 
@@ -142,4 +150,5 @@
     });
 </script>
 @endpush
+
 @endsection

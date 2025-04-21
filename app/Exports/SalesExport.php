@@ -8,9 +8,23 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use App\Models\Sale;
 
-class SalesExport implements FromCollection, WithHeadings, WithMapping,
 
+class SalesExport implements FromCollection, WithHeadings, WithMapping
 {
+    private static $counter = 1;
+    private $maxProducts = 0;
+
+    public function __construct()
+    {
+        // Hitung jumlah maksimum produk dalam satu penjualan
+        $this->maxProducts = Sale::all()->map(function ($sale) {
+            $products = is_string($sale->product_data)
+                ? json_decode($sale->product_data, true)
+                : $sale->product_data;
+            return is_array($products) ? count($products) : 0;
+        })->max();
+    }
+
     public function collection()
     {
         return Sale::all();
@@ -18,30 +32,56 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        return [
+        $headers = [
             'No',
             'Nomor Invoice',
             'Nama Pelanggan',
             'Tanggal Penjualan',
-            'Produk',
+        ];
+
+        // Tambahkan kolom Produk dan Qty sesuai jumlah maksimum produk
+        for ($i = 1; $i <= $this->maxProducts; $i++) {
+            $headers[] = "Produk $i";
+            $headers[] = "Qty $i";
+        }
+
+        // Tambahan kolom lain
+        $headers = array_merge($headers, [
             'Total Harga',
             'Total Bayar',
             'Kembalian',
             'Diskon',
             'Dibuat Oleh'
-        ];
-    }
+        ]);
 
-    private static $counter = 1;
+        return $headers;
+    }
 
     public function map($sale): array
     {
+        $row = [];
+
         $id = self::$counter++;
 
-        $productData = is_string($sale->product_data) ? json_decode($sale->product_data, true) : $sale->product_data;
+        $row[] = $id;
+        $row[] = $sale->invoice_number;
+        $row[] = $sale->customer_name;
+        $row[] = $sale->created_at->format('d-m-Y H:i');
 
+        $productData = is_string($sale->product_data) ? json_decode($sale->product_data, true) : $sale->product_data;
         if (!is_array($productData)) {
             $productData = [];
+        }
+
+        // Tambahkan Produk dan Qty ke kolom yang sesuai
+        for ($i = 0; $i < $this->maxProducts; $i++) {
+            if (isset($productData[$i])) {
+                $row[] = $productData[$i]['name'] ?? '-';
+                $row[] = $productData[$i]['quantity'] ?? '-';
+            } else {
+                $row[] = '-';
+                $row[] = '-';
+            }
         }
 
         $totalProductPrice = array_reduce($productData, function ($carry, $item) {
@@ -50,17 +90,12 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping,
 
         $discount = $totalProductPrice - (float) $sale->total_amount;
 
-        return [
-            $id,
-            $sale->invoice_number,
-            $sale->customer_name,
-            $sale->created_at->format('d-m-Y H:i'),
-            json_encode($productData, JSON_UNESCAPED_UNICODE),
-            'Rp ' . number_format($sale->total_amount, 0, ',', '.'),
-            'Rp ' . number_format($sale->payment_amount, 0, ',', '.'),
-            'Rp ' . number_format($sale->change_amount, 0, ',', '.'),
-            'Rp ' . number_format($discount, 0, ',', '.'),
-            DB::table('users')->where('id', $sale->user_id)->value('name'),
-        ];
+        $row[] = 'Rp ' . number_format($sale->total_amount, 0, ',', '.');
+        $row[] = 'Rp ' . number_format($sale->payment_amount, 0, ',', '.');
+        $row[] = 'Rp ' . number_format($sale->change_amount, 0, ',', '.');
+        $row[] = 'Rp ' . number_format($discount, 0, ',', '.');
+        $row[] = DB::table('users')->where('id', $sale->user_id)->value('name');
+
+        return $row;
     }
 }

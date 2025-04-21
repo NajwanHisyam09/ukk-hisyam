@@ -18,7 +18,7 @@
                     <div class="table-responsive">
                         <div class="row mb-3">
                             <div class="col-md-12 d-flex justify-content-between align-items-center">
-                                <form action="{{ route('manageradmin.user.index') }}" method="GET" class="d-flex"
+                                <form action="{{ route('user.index') }}" method="GET" class="d-flex"
                                 style="max-width: 100%%;">
                                 <div class="input-group">
                                     <input type="text" name="search" class="form-control rounded"
@@ -28,8 +28,8 @@
                                     </div>
                                 </div>
                             </form>
-                            @if(Auth::user()->role == 'manageradmin')
-                            <a href="{{ route('manageradmin.user.create') }}" class="btn btn-success ml-2 p-2">
+                            @if(Auth::user()->role == 'admin')
+                            <a href="{{ route('user.create') }}" class="btn btn-success ml-2 p-2">
                                 Create User
                             </a>
                             @endif

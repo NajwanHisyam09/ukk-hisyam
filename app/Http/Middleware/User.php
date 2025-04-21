@@ -16,8 +16,8 @@ class User
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->user()->role != 'manageradmin') {
-            abort(403);
+        if (Auth::user()->role == 'user') {
+            return $next($request);
         }
 
         abort(403, 'Tidak Memiliki Akses!');

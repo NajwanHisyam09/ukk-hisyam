@@ -27,7 +27,7 @@
                                     </div>
                                 </div>
                             </form>
-                            @if(Auth::user()->role == 'manageradmin')
+                            @if(Auth::user()->role == 'admin')
                             <a href="{{ route('products.create') }}" class="btn btn-success ml-2 p-2">
                                 Create Product
                             </a>
@@ -42,7 +42,7 @@
                                 <th>Gambar</th>
                                 <th>Harga</th>
                                 <th>Stok</th>
-                                @if(Auth::user()->role == 'manageradmin')
+                                @if(Auth::user()->role == 'admin')
                                 <th>Action</th>
                                 @endif
                             </tr>
@@ -56,7 +56,7 @@
                                     width="100"></td>
                                     <td>{{ 'Rp ' . number_format($item->price, 0, ',', '.') }}</td>
                                     <td>{{ $item->quantity }}</td>
-                                    @if(Auth::user()->role == 'manageradmin')
+                                    @if(Auth::user()->role == 'admin')
                                     <td class="text-center">
                                         <button type="button" class="btn btn-primary edit-stock-btn"
                                         data-id="{{ $item->id }}" data-name="{{ $item->name }}"
