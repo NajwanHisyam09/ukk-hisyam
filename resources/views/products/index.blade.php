@@ -32,6 +32,9 @@
                                 Create Product
                             </a>
                             @endif
+                            <a href="{{ route('sales.export') }}" class="btn btn-success ml-2 p-2">
+                                Export Excel
+                            </a>  
                         </div>
                     </div>
                     <table class="table table-bordered" style="background-color: #f3f3f3">

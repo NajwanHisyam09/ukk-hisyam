@@ -28,7 +28,7 @@ class HomeController extends Controller
         $userCount = null;
         $totalPenjualanHariIni = 0;
 
-        if (auth()->user()->role == 'manageradmin') {
+        if (auth()->user()->role == 'admin') {
             $userCount = \App\Models\User::count();
         } else {
             $totalPenjualanHariIni = \App\Models\Sale::whereDate('created_at', today())->sum('total');

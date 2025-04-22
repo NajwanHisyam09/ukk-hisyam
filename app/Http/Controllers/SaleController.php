@@ -53,90 +53,95 @@ class SaleController extends Controller
     }
 
     public function store(Request $request)
-{
+    {
 
-    $request->validate([
-        'total_pay' => ['required', 'numeric', 'min:' . $request->total_amount],
-    ], [
-        'total_pay.min' => 'Jumlah bayar tidak boleh kurang dari total pembayaran.'
-    ]);
-    
-    $productData = json_decode($request->input('product_data'), true);
-    $totalPay = $request->input('total_pay');
-    $totalAmount = $request->input('total_amount');
-    $invoiceNumber = 'INV-' . strtoupper(Str::random(8));
+        $request->validate([
+            'total_pay' => ['required', 'numeric', 'min:' . $request->total_amount],
+        ], [
+            'total_pay.min' => 'Jumlah bayar tidak boleh kurang dari total pembayaran.'
+        ]);
 
-    $memberName = $invoiceNumber;
-    $memberId = null;
-    $member = null;
+        $productData = json_decode($request->input('product_data'), true);
+        $totalPay = $request->input('total_pay');
+        $totalAmount = $request->input('total_amount');
+        $invoiceNumber = 'INV-' . strtoupper(Str::random(8));
 
-    if (!empty($request->member_id)) {
-        $member = Member::find($request->member_id);
-        if ($member) {
-            $memberId = $member->id;
-            $memberName = $member->name;
+        $memberName = $invoiceNumber;
+        $memberId = null;
+        $member = null;
+
+        if (!empty($request->member_id)) {
+            $member = Member::find($request->member_id);
+            if ($member) {
+                $memberId = $member->id;
+                $memberName = $member->name;
+            }
         }
-    }
 
-    // Redirect ke view khusus jika hanya ingin lihat ringkasan member
-    if ($request->is_member == 'yes') {
-        $products = $productData;
-        return view('sales.member', compact('member', 'products', 'totalAmount', 'totalPay'));
-    }
-
-    // Point logic
-    $discount = 0;
-    $addPoint = 0;
-    $currentPoints = 0;
-
-    if ($request->use_point == 1) {
-        $totalAmount -= $request->total_point;
-        Member::where('id', $memberId)->decrement('points', $request->total_point);
-        $discount = $request->total_point;
-    } else {
-        if ($memberId) {
-            $addPoint = floor($totalAmount / 100); // misal setiap 750 dapat 1 poin
-            Member::where('id', $memberId)->increment('points', $addPoint);
+        // Redirect ke view khusus jika hanya ingin lihat ringkasan member
+        if ($request->is_member == 'yes') {
+            $products = $productData;
+            return view('sales.member', compact('member', 'products', 'totalAmount', 'totalPay'));
         }
+
+        // Point logic
+        $discount = 0;
+        $addPoint = 0;
+        $currentPoints = 0;
+
+        if ($request->use_point == 1) {
+            $totalAmount -= $request->total_point;
+            Member::where('id', $memberId)->decrement('points', $request->total_point);
+            $discount = $request->total_point;
+        } else {
+            if ($memberId) {
+                $addPoint = floor($totalAmount / 100); 
+                Member::where('id', $memberId)->increment('points', $addPoint);
+            }
+        }
+
+        // Get current point setelah perubahan
+        if ($memberId == 1) {
+            $currentPoints = Member::find($memberId)->points;
+        } else {
+            if ($memberId) {
+                $addPoint = floor($totalAmount / 100); 
+                Member::where('id', $memberId)->increment('points', $addPoint);
+            }
+        }
+
+        // Simpan transaksi
+        Sale::create([
+            'id' => Str::uuid(),
+            'invoice_number' => $invoiceNumber,
+            'customer_name' => $memberName,
+            'user_id' => Auth::user()->id,
+            'member_id' => $memberId,
+            'product_data' => json_encode($productData),
+            'total_amount' => $totalAmount,
+            'payment_amount' => $totalPay,
+            'change_amount' => $totalPay - $totalAmount,
+            'notes' => '-',
+        ]);
+
+        // Update stok produk
+        foreach ($productData as $product) {
+            Product::where('id', $product['id'])->decrement('quantity', $product['quantity']);
+        }
+
+        // Kirim data ke invoice view
+        return view('sales.invoice', compact(
+            'invoiceNumber',
+            'totalAmount',
+            'totalPay',
+            'memberName',
+            'memberId',
+            'productData',
+            'discount',
+            'addPoint',
+            'currentPoints'
+        ));
     }
-
-    // Get current point setelah perubahan
-    if ($memberId) {
-        $currentPoints = Member::find($memberId)->points;
-    }
-
-    // Simpan transaksi
-    Sale::create([
-        'id' => Str::uuid(),
-        'invoice_number' => $invoiceNumber,
-        'customer_name' => $memberName,
-        'user_id' => Auth::user()->id,
-        'member_id' => $memberId,
-        'product_data' => json_encode($productData),
-        'total_amount' => $totalAmount,
-        'payment_amount' => $totalPay,
-        'change_amount' => $totalPay - $totalAmount,
-        'notes' => '-',
-    ]);
-
-    // Update stok produk
-    foreach ($productData as $product) {
-        Product::where('id', $product['id'])->decrement('quantity', $product['quantity']);
-    }
-
-    // Kirim data ke invoice view
-    return view('sales.invoice', compact(
-        'invoiceNumber',
-        'totalAmount',
-        'totalPay',
-        'memberName',
-        'memberId',
-        'productData',
-        'discount',
-        'addPoint',
-        'currentPoints'
-    ));
-}
 
     public function showInvoice($id)
     {

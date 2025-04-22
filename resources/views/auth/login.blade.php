@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-center align-items-center min-vh-100">
     <div class="card shadow-lg border-0 rounded" style="max-width: 400px; width: 100%; padding: 20px;">
         <div class="card-header text-center">
-            <h4 class="mb-0">Login</h4>
+            <h4 class="mb-0">Login Web Kasir</h4>
         </div>
 
         <div class="card-body">
